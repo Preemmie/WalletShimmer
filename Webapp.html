@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กระเป๋าเงิน วับวาวว Ultimate - Pastel Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Library สำหรับจัดการ Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #FDFCFE; color: #4A4A68; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(74, 74, 104, 0.4); backdrop-filter: blur(8px); z-index: 100; }
+        .modal.active { display: flex; }
+        
+        .bg-pastel-violet { background-color: #EDE9FE; }
+        .bg-pastel-primary { background-color: #A78BFA; }
+        .text-pastel-primary { color: #8B5CF6; }
+        .border-pastel { border-color: #DDD6FE; }
+        
+        .nav-active { background-color: #A78BFA !important; color: white !important; box-shadow: 0 8px 20px -4px rgba(167, 139, 250, 0.4); }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(221, 214, 254, 0.5); }
+        
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #DDD6FE; border-radius: 10px; }
+        input[type="number"]::-webkit-inner-spin-button { display: none; }
+
+        .btn-pastel {
+            transition: all 0.3s ease;
+            background-color: #A78BFA;
+        }
+        .btn-pastel:hover {
+            background-color: #8B5CF6;
+            transform: translateY(-2px);
+        }
+        .ai-loading {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* การจัดการฟอนต์และสไตล์ของ AI ให้สวยงาม */
+        .prose-ai h1, .prose-ai h2, .prose-ai h3 {
+            color: #8B5CF6;
+            font-weight: 600;
+            margin-top: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .prose-ai p { margin-bottom: 0.8rem; line-height: 1.6; }
+        .prose-ai ul, .prose-ai ol { margin-bottom: 1rem; padding-left: 1.2rem; }
+        .prose-ai li { margin-bottom: 0.4rem; list-style-type: disc; }
+        .prose-ai strong { color: #5B21B6; font-weight: 600; }
+        .prose-ai table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .prose-ai th, .prose-ai td { padding: 0.5rem; border: 1px solid #EDE9FE; }
+        .prose-ai th { background: #F5F3FF; }
+
+        /* Empty State Styling */
+        .empty-state {
+            border: 2px dashed #DDD6FE;
+            border-radius: 2rem;
+            padding: 3rem;
+            text-align: center;
+            color: #A78BFA;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex justify-between items-center p-4 bg-white border-b border-pastel">
+        <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" class="text-pastel-primary"></i>
+            <span class="font-bold text-slate-700">FinAI <span class="text-pastel-primary">Pastel</span></span>
+        </div>
+        <button onclick="openModal('profile-modal')" class="w-10 h-10 rounded-full bg-pastel-violet flex items-center justify-center text-pastel-primary font-bold text-sm shadow-sm" id="mobile-avatar-display">ค</button>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-pastel hidden md:flex flex-col p-6 shrink-0">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="p-2 bg-pastel-violet rounded-xl">
+                <i data-lucide="sparkles" class="text-pastel-primary"></i>
+            </div>
+            <h1 class="text-xl font-bold text-slate-700">กระเป๋าเงิน <span class="text-pastel-primary">วับวาวว</span></h1>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all hover:bg-pastel-violet text-slate-400"><i data-lucide="layout-dashboard" size="18"></i> แดชบอร์ด</button>
+            <button onclick="switchTab('goals')" id="nav-goals" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all hover:bg-pastel-violet text-slate-400"><i data-lucide="target" size="18"></i> เป้าหมาย</button>
+            <button onclick="switchTab('debt')" id="nav-debt" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all hover:bg-pastel-violet text-slate-400"><i data-lucide="hand-coins" size="18"></i> แผนลดหนี้</button>
+            <button onclick="switchTab('wealth')" id="nav-wealth" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all hover:bg-pastel-violet text-slate-400"><i data-lucide="trending-up" size="18"></i> ความมั่งคั่ง</button>
+            <button onclick="switchTab('ai')" id="nav-ai" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all hover:bg-pastel-violet text-slate-400"><i data-lucide="bot" size="18"></i> ที่ปรึกษา AI</button>
+        </nav>
+
+        <div class="mt-auto cursor-pointer" onclick="openModal('profile-modal')">
+            <div class="p-4 bg-pastel-violet rounded-[2rem] flex items-center gap-3 transition-transform hover:scale-105">
+                <div class="w-10 h-10 rounded-full bg-white text-pastel-primary flex items-center justify-center font-bold shadow-sm" id="sidebar-avatar">ค</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-slate-700 truncate" id="sidebar-name">คุณนายขา</p>
+                    <p class="text-[10px] text-pastel-primary">คลิกเพื่อตั้งชื่อเจ้าค่ะ</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scroll pb-24 md:pb-8">
+        <div class="max-w-6xl mx-auto p-4 md:p-8">
+            
+            <!-- Tab: Dashboard -->
+            <div id="tab-dashboard" class="tab-content space-y-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-800">สวัสดีค่า คุณนาย<span id="welcome-name" class="text-pastel-primary"></span> ✨</h2>
+                        <p class="text-slate-400">มาจัดการการเงินแบบนุ่มนวลสไตล์พาสเทลกัน</p>
+                    </div>
+                    <button onclick="openModal('add-modal')" class="bg-pastel-primary text-white px-8 py-4 rounded-[1.5rem] font-bold shadow-lg shadow-purple-100 btn-pastel flex items-center justify-center gap-2 w-full md:w-auto"><i data-lucide="plus" size="18"></i> บันทึกธุรกรรม</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-pastel shadow-sm relative overflow-hidden group">
+                        <p class="text-slate-400 text-xs font-bold uppercase mb-2 tracking-wider">เงินคงเหลือ</p>
+                        <h3 id="stat-balance" class="text-4xl font-bold text-slate-800">0 ฿</h3>
+                    </div>
+                    <div class="bg-emerald-50 p-8 rounded-[2.5rem] border border-emerald-100 shadow-sm">
+                        <p class="text-emerald-500/80 text-xs font-bold uppercase mb-2 tracking-wider">รายรับสะสม</p>
+                        <h3 id="stat-income" class="text-4xl font-bold text-emerald-600">0 ฿</h3>
+                    </div>
+                    <div class="bg-rose-50 p-8 rounded-[2.5rem] border border-rose-100 shadow-sm">
+                        <p class="text-rose-400 text-xs font-bold uppercase mb-2 tracking-wider">รายจ่ายสะสม</p>
+                        <h3 id="stat-expense" class="text-4xl font-bold text-rose-500">0 ฿</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-pastel shadow-sm">
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="font-bold text-slate-700">รายการล่าสุด</h4>
+                            <i data-lucide="history" class="text-slate-300" size="18"></i>
+                        </div>
+                        <div id="transaction-list" class="space-y-4"></div>
+                    </div>
+                    <div class="bg-pastel-violet p-8 rounded-[2.5rem] border border-white flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-20"><i data-lucide="quote" size="64"></i></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-2 mb-6">
+                                <div class="bg-white p-2 rounded-lg"><i data-lucide="bot" class="text-pastel-primary" size="20"></i></div>
+                                <h4 class="font-bold text-pastel-primary">AI Financial Analyst</h4>
+                            </div>
+                            <div id="ai-insight-text" class="prose-ai text-sm font-medium text-slate-600 leading-relaxed italic">"พร้อมวิเคราะห์สุขภาพการเงินของคุณแบบเจาะลึกแล้วครับ..."</div>
+                        </div>
+                        <button onclick="analyzeFinances()" id="btn-analyze-dashboard" class="mt-8 py-4 bg-white text-pastel-primary rounded-2xl text-sm font-bold shadow-sm hover:shadow-md transition-all">วิเคราะห์สุขภาพการเงินเชิงลึก</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Goals -->
+            <div id="tab-goals" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">เป้าหมายของฉัน</h2>
+                        <p class="text-slate-400 text-sm">ออมวันละนิด เพื่อฝันที่ยิ่งใหญ่</p>
+                    </div>
+                    <button onclick="openModal('add-goal-modal')" class="bg-pastel-primary text-white px-6 py-3 rounded-2xl font-bold shadow-md btn-pastel">สร้างเป้าหมายใหม่</button>
+                </div>
+                <div id="goals-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+
+            <!-- Tab: Debt Freedom -->
+            <div id="tab-debt" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">แผนลดหนี้</h2>
+                        <p class="text-slate-400 text-sm">เคลียร์ใจ เคลียร์หนี้ เพื่อชีวิตที่เบาสบาย</p>
+                    </div>
+                    <button onclick="openModal('add-debt-modal')" class="bg-pastel-primary text-white px-6 py-3 rounded-2xl font-bold shadow-md btn-pastel">เพิ่มหนี้สิน</button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-3 space-y-4" id="debt-list"></div>
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-[2rem] border border-pastel shadow-sm">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">สรุปหนี้สินรวม</h4>
+                            <div class="space-y-2">
+                                <p id="debt-total-amount" class="text-3xl font-bold text-rose-500">0 ฿</p>
+                                <p class="text-[10px] text-slate-400">จากทั้งหมด <span id="debt-count">0</span> รายการ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Wealth Projection (คงเดิม) -->
+            <div id="tab-wealth" class="tab-content hidden space-y-6">
+                <div class="bg-white border-2 border-pastel p-10 rounded-[3rem] shadow-sm relative overflow-hidden">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">พลังของการสะสม</h2>
+                    <p class="text-slate-400 mb-10">จำลองความมั่งคั่งในระยะยาว</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-widest">เงินต้นปัจจุบัน</label>
+                                <input type="number" id="wealth-principal" value="0" oninput="calculateWealth()" class="w-full bg-slate-50 border-pastel border p-4 rounded-2xl text-2xl font-bold outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-widest">ออมเพิ่มต่อเดือน</label>
+                                <input type="number" id="wealth-monthly" value="0" oninput="calculateWealth()" class="w-full bg-slate-50 border-pastel border p-4 rounded-2xl text-2xl font-bold outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-widest">ผลตอบแทนต่อปี (%)</label>
+                                <input type="number" id="wealth-rate" value="0" oninput="calculateWealth()" class="w-full bg-slate-50 border-pastel border p-4 rounded-2xl text-2xl font-bold outline-none">
+                            </div>
+                        </div>
+                        <div class="bg-pastel-violet p-10 rounded-[2.5rem] flex flex-col justify-center text-center border-2 border-white shadow-inner">
+                            <p class="text-sm font-bold text-pastel-primary uppercase mb-4 tracking-widest">ในอีก 20 ปีข้างหน้า คุณจะมี</p>
+                            <h3 id="wealth-result" class="text-5xl font-bold text-slate-800 mb-4">0 ฿</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: AI Advisor (คงเดิม) -->
+            <div id="tab-ai" class="tab-content hidden h-[600px] flex flex-col bg-white rounded-[2.5rem] border border-pastel shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-pastel bg-pastel-violet flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm"><i data-lucide="bot" class="text-pastel-primary"></i></div>
+                    <div><span class="font-bold text-slate-700 block">FinAI Pastel Advisor</span></div>
+                </div>
+                <div id="chat-box" class="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30 custom-scroll"></div>
+                <div class="p-6 bg-white border-t border-pastel flex gap-3">
+                    <input id="chat-input" type="text" placeholder="พิมพ์คำถามของคุณที่นี่..." class="flex-1 p-4 rounded-2xl bg-slate-50 border-pastel border outline-none">
+                    <button onclick="sendChatMessage()" class="bg-pastel-primary text-white p-4 rounded-2xl btn-pastel shadow-md"><i data-lucide="send" size="20"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modals (คงเดิม) -->
+    <div id="profile-modal" class="modal items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl border border-pastel p-8 space-y-6">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-pastel-violet text-pastel-primary rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 border-4 border-white shadow-md" id="modal-avatar">ค</div>
+                <h3 class="font-bold text-xl text-slate-700">ชื่อเล่นของคุณ</h3>
+            </div>
+            <input type="text" id="input-name" class="w-full p-4 bg-slate-50 border border-pastel rounded-2xl outline-none">
+            <button onclick="saveProfile()" class="w-full bg-pastel-primary text-white py-4 rounded-2xl font-bold btn-pastel shadow-lg">บันทึก</button>
+            <button onclick="closeModal('profile-modal')" class="w-full text-slate-400 text-sm">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="add-modal" class="modal items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl border border-pastel p-8 space-y-5">
+            <h3 class="font-bold text-xl text-center text-slate-700">บันทึกเงิน</h3>
+            <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl">
+                <button id="btn-type-inc" onclick="setTxType('income')" class="flex-1 py-3 rounded-xl font-bold">รายรับ</button>
+                <button id="btn-type-exp" onclick="setTxType('expense')" class="flex-1 py-3 rounded-xl font-bold bg-pastel-primary text-white">รายจ่าย</button>
+            </div>
+            <input type="number" id="tx-amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-pastel rounded-2xl text-2xl font-bold outline-none">
+            <select id="tx-category" class="w-full p-4 bg-slate-50 border border-pastel rounded-2xl outline-none"></select>
+            <button onclick="saveTransaction()" class="w-full bg-pastel-primary text-white py-4 rounded-2xl font-bold btn-pastel">ยืนยัน</button>
+            <button onclick="closeModal('add-modal')" class="w-full text-slate-400 text-sm">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="add-goal-modal" class="modal items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl border border-pastel p-8 space-y-4">
+            <h3 class="font-bold text-xl text-center text-slate-700">เพิ่มเป้าหมายพร้อม AI แนะนำ</h3>
+            <input type="text" id="goal-name" placeholder="ชื่อเป้าหมาย (เช่น ซื้อไอโฟน)" class="w-full p-4 bg-slate-50 border border-pastel rounded-2xl outline-none">
+            <input type="number" id="goal-target" placeholder="จำนวนเงินที่ต้องการ" class="w-full p-4 bg-slate-50 border border-pastel rounded-2xl outline-none">
+            <button id="btn-save-goal" onclick="saveGoal()" class="w-full bg-pastel-primary text-white py-4 rounded-2xl font-bold btn-pastel shadow-lg flex items-center justify-center gap-2">
+                <i data-lucide="sparkles" size="18"></i> วิเคราะห์และบันทึก
+            </button>
+            <button onclick="closeModal('add-goal-modal')" class="w-full text-slate-400 text-sm">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="add-debt-modal" class="modal items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 space-y-4 shadow-2xl border border-pastel">
+            <h3 class="font-bold text-xl text-center">เพิ่มรายการหนี้สิน</h3>
+            <input type="text" id="debt-name" placeholder="ชื่อหนี้สิน" class="w-full p-4 bg-slate-50 border-pastel border rounded-2xl">
+            <input type="number" id="debt-balance" placeholder="ยอดหนี้ปัจจุบัน" class="w-full p-4 bg-slate-50 border-pastel border rounded-2xl">
+            <button onclick="saveDebt()" class="w-full bg-pastel-primary text-white py-4 rounded-2xl font-bold btn-pastel">บันทึกหนี้สิน</button>
+            <button onclick="closeModal('add-debt-modal')" class="w-full text-slate-400 text-sm">ปิด</button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = "AIzaSyAJkwtYqXMkSojSeN0T3KY78FoRgs5Q7cY"; // API Key จาก Environment
+        
+        let state = {
+            transactions: JSON.parse(localStorage.getItem('fin_tx_v2') || '[]'),
+            debts: JSON.parse(localStorage.getItem('fin_debt_v2') || '[]'),
+            goals: JSON.parse(localStorage.getItem('fin_goals_v2') || '[]'),
+            user: { name: localStorage.getItem('fin_name_v2') || 'คุณ' },
+            currentType: 'expense'
+        };
+
+        const categories = {
+            income: ['เงินเดือน', 'รายได้เสริม', 'โบนัส', 'ปันผล', 'อื่นๆ'],
+            expense: ['อาหาร', 'เดินทาง', 'ที่พัก', 'ช้อปปิ้ง', 'หนี้สิน', 'สุขภาพ', 'อื่นๆ']
+        };
+
+        window.onload = () => {
+            lucide.createIcons();
+            applyProfile();
+            updateUI();
+            updateCategoryList();
+            calculateWealth();
+            switchTab('dashboard');
+        };
+
+        function applyProfile() {
+            const char = state.user.name.charAt(0);
+            ['sidebar-name', 'welcome-name'].forEach(id => document.getElementById(id).innerText = state.user.name);
+            ['sidebar-avatar', 'mobile-avatar-display', 'modal-avatar'].forEach(id => document.getElementById(id).innerText = char);
+            document.getElementById('input-name').value = state.user.name;
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('input-name').value.trim();
+            if (name) { state.user.name = name; localStorage.setItem('fin_name_v2', name); applyProfile(); closeModal('profile-modal'); }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+            const active = document.getElementById('nav-' + tabId);
+            if(active) active.classList.add('nav-active');
+        }
+
+        function getFinancialContext() {
+            const inc = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const exp = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const debts = state.debts.reduce((s, d) => s + d.balance, 0);
+            const balance = inc - exp;
+            
+            const expCats = {};
+            state.transactions.filter(t => t.type === 'expense').forEach(t => {
+                expCats[t.category] = (expCats[t.category] || 0) + t.amount;
+            });
+            const sortedCats = Object.entries(expCats).sort((a,b) => b[1] - a[1]);
+            const topExpText = sortedCats.length > 0 ? `${sortedCats[0][0]} (${sortedCats[0][1].toLocaleString()} ฿)` : 'ยังไม่มีข้อมูล';
+
+            return { inc, exp, debts, balance, topExpText };
+        }
+
+        async function callGeminiAI(userPrompt, systemPrompt = "") {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (error) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            return null;
+        }
+
+        async function analyzeFinances() {
+            const insightElement = document.getElementById('ai-insight-text');
+            const btn = document.getElementById('btn-analyze-dashboard');
+            
+            insightElement.innerHTML = `<span class="ai-loading text-pastel-primary font-bold">กำลังประมวลผลข้อมูลการเงินของคุณ...</span>`;
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            const { inc, exp, debts, balance, topExpText } = getFinancialContext();
+            const userPrompt = `วิเคราะห์ข้อมูล: รายรับ ${inc}, รายจ่าย ${exp}, หมวดจ่ายเยอะสุด ${topExpText}, หนี้สิน ${debts}, เงินเหลือ ${balance}`;
+            const systemPrompt = `คุณคือ Financial Analyst มืออาชีพ วิเคราะห์สุขภาพการเงินของผู้ใช้ (ชื่อ: ${state.user.name}) โดยใช้ Markdown format มีหัวข้อชัดเจน สวยงาม สั้นกระชับ`;
+
+            const result = await callGeminiAI(userPrompt, systemPrompt);
+            insightElement.innerHTML = result ? marked.parse(result) : "ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้";
+            
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+        }
+
+        function updateUI() {
+            const { inc, exp, balance, debts } = getFinancialContext();
+            document.getElementById('stat-balance').innerText = balance.toLocaleString() + ' ฿';
+            document.getElementById('stat-income').innerText = inc.toLocaleString() + ' ฿';
+            document.getElementById('stat-expense').innerText = exp.toLocaleString() + ' ฿';
+
+            // รายการล่าสุด
+            const list = document.getElementById('transaction-list');
+            if (state.transactions.length === 0) {
+                list.innerHTML = `<div class="p-4 text-center text-slate-300 text-sm">ยังไม่มีรายการบันทึก</div>`;
+            } else {
+                list.innerHTML = state.transactions.slice().reverse().slice(0, 5).map(t => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-transparent">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${t.type === 'income' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-400'} flex items-center justify-center">
+                                <i data-lucide="${t.type === 'income' ? 'arrow-up-right' : 'arrow-down-right'}" size="14"></i>
+                            </div>
+                            <p class="font-bold text-sm text-slate-700">${t.category}</p>
+                        </div>
+                        <p class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-600'}">${t.type === 'income' ? '+' : '-'}${t.amount.toLocaleString()}</p>
+                    </div>
+                `).join('');
+            }
+
+            // เป้าหมาย (Empty State Check)
+            const gList = document.getElementById('goals-list');
+            if (state.goals.length === 0) {
+                gList.innerHTML = `<div class="md:col-span-2 empty-state">ยังไม่มีเป้าหมาย สร้างเลย!</div>`;
+            } else {
+                gList.innerHTML = state.goals.map((g, i) => `
+                    <div class="bg-white p-6 rounded-[2rem] border border-pastel shadow-sm space-y-4">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-slate-700">${g.name}</h4>
+                            <button onclick="deleteGoal(${i})" class="text-rose-300 hover:text-rose-500"><i data-lucide="trash-2" size="16"></i></button>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div class="bg-pastel-primary h-full" style="width: ${Math.min(100, (g.current/g.target)*100)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-pastel-primary">${g.current.toLocaleString()} ฿</span>
+                            <span class="text-slate-300">เป้าหมาย ${g.target.toLocaleString()} ฿</span>
+                        </div>
+                        <div class="p-4 bg-pastel-violet/50 rounded-2xl prose-ai text-[11px] leading-relaxed">
+                            ${marked.parse(g.aiAnalysis || "ยังไม่มีข้อมูลวิเคราะห์")}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // หนี้สิน (Empty State Check)
+            const dList = document.getElementById('debt-list');
+            document.getElementById('debt-total-amount').innerText = debts.toLocaleString() + ' ฿';
+            document.getElementById('debt-count').innerText = state.debts.length;
+
+            if (state.debts.length === 0) {
+                dList.innerHTML = `<div class="empty-state">ยังไม่มีรายการหนี้สิน สู้ๆ นะ!</div>`;
+            } else {
+                dList.innerHTML = state.debts.map((d, i) => `
+                    <div class="bg-white p-6 rounded-[2rem] border border-pastel shadow-sm flex flex-col md:flex-row gap-6 items-center">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-700">${d.name}</h4>
+                            <p class="text-2xl font-bold text-rose-500">${d.balance.toLocaleString()} ฿</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="pay-debt-${i}" placeholder="ยอดจ่าย" class="w-24 p-2 bg-slate-50 border border-pastel rounded-xl text-sm outline-none">
+                            <button onclick="payDebt(${i})" class="bg-emerald-400 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 transition-colors">ชำระ</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            lucide.createIcons();
+        }
+
+        async function saveGoal() {
+            const name = document.getElementById('goal-name').value;
+            const target = parseFloat(document.getElementById('goal-target').value);
+            if (!name || !target) return;
+
+            const btn = document.getElementById('btn-save-goal');
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" size="18"></i> กำลังวิเคราะห์...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
+            const { balance } = getFinancialContext();
+            const prompt = `เป้าหมาย: "${name}" ราคา ${target} บาท, สถานะ: เงินเหลือเก็บ ${balance} ต่อเดือน. วิเคราะห์ความเป็นไปได้และแนะนำวิธีเก็บเงินสั้นๆ (Markdown format)`;
+            const aiAnalysis = await callGeminiAI(prompt, "คุณคือนักวางแผนการเงินส่วนบุคคล ใช้ Markdown สวยๆ") || "บันทึกข้อมูลเรียบร้อย";
+
+            state.goals.push({ name, target, current: 0, aiAnalysis });
+            localStorage.setItem('fin_goals_v2', JSON.stringify(state.goals));
+            
+            closeModal('add-goal-modal');
+            updateUI();
+            btn.innerHTML = `<i data-lucide="sparkles" size="18"></i> วิเคราะห์และบันทึก`;
+            btn.disabled = false;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const box = document.getElementById('chat-box');
+            if(!input.value) return;
+            const msg = input.value; input.value = '';
+            box.innerHTML += `<div class="flex justify-end"><div class="bg-pastel-primary text-white p-4 rounded-3xl rounded-tr-none max-w-[80%] shadow-md text-sm">${msg}</div></div>`;
+            box.scrollTop = box.scrollHeight;
+
+            const { inc, exp, debts, balance } = getFinancialContext();
+            const contextPrompt = `สถานะปัจจุบัน: รายรับ ${inc}, รายจ่าย ${exp}, หนี้ ${debts}, เงินเหลือ ${balance}. คำถาม: ${msg}`;
+            const reply = await callGeminiAI(contextPrompt, "You are a helpful financial assistant. Use Markdown for structured responses.");
+            
+            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border border-pastel text-slate-600 p-4 rounded-3xl rounded-tl-none max-w-[80%] shadow-sm text-sm prose-ai">${marked.parse(reply || "วันนี้ AI พักสมองอยู่ครับ")}</div></div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function saveTransaction() {
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const category = document.getElementById('tx-category').value;
+            if(!amount) return;
+            state.transactions.push({ id: Date.now(), type: state.currentType, amount, category, date: new Date().toLocaleDateString('th-TH') });
+            localStorage.setItem('fin_tx_v2', JSON.stringify(state.transactions));
+            closeModal('add-modal');
+            updateUI();
+        }
+
+        function saveDebt() {
+            const name = document.getElementById('debt-name').value;
+            const balance = parseFloat(document.getElementById('debt-balance').value);
+            if(!name || !balance) return;
+            state.debts.push({ name, balance });
+            localStorage.setItem('fin_debt_v2', JSON.stringify(state.debts));
+            closeModal('add-debt-modal');
+            updateUI();
+        }
+
+        function payDebt(i) {
+            const amount = parseFloat(document.getElementById(`pay-debt-${i}`).value);
+            if (!amount) return;
+            state.debts[i].balance = Math.max(0, state.debts[i].balance - amount);
+            state.transactions.push({ type: 'expense', amount, category: 'หนี้สิน', date: 'ชำระหนี้' });
+            localStorage.setItem('fin_debt_v2', JSON.stringify(state.debts));
+            localStorage.setItem('fin_tx_v2', JSON.stringify(state.transactions));
+            updateUI();
+        }
+
+        function deleteGoal(i) { state.goals.splice(i, 1); localStorage.setItem('fin_goals_v2', JSON.stringify(state.goals)); updateUI(); }
+        function calculateWealth() {
+            const p = parseFloat(document.getElementById('wealth-principal').value) || 0;
+            const m = parseFloat(document.getElementById('wealth-monthly').value) || 0;
+            const r = (parseFloat(document.getElementById('wealth-rate').value) || 0) / 100 / 12;
+            const n = 240;
+            let fv = p * Math.pow(1 + r, n) + (r > 0 ? m * ((Math.pow(1 + r, n) - 1) / r) : m * n);
+            document.getElementById('wealth-result').innerText = Math.round(fv).toLocaleString() + ' ฿';
+        }
+        function setTxType(type) { 
+            state.currentType = type; 
+            document.getElementById('btn-type-inc').classList.toggle('bg-pastel-primary', type === 'income');
+            document.getElementById('btn-type-inc').classList.toggle('text-white', type === 'income');
+            document.getElementById('btn-type-exp').classList.toggle('bg-pastel-primary', type === 'expense');
+            document.getElementById('btn-type-exp').classList.toggle('text-white', type === 'expense');
+            updateCategoryList(); 
+        }
+        function updateCategoryList() {
+            const select = document.getElementById('tx-category');
+            if (select) select.innerHTML = categories[state.currentType].map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    </script>
+</body>
+</html>

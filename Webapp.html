@@ -303,11 +303,11 @@
         const apiKey = "AIzaSyAC0eOGXuWwhNCxpehG2VoaFVD2xMgTjiA"; // API Key จาก Environment
         
         let state = {
-            transactions: JSON.parse(localStorage.getItem('fin_tx_v2') || '[]'),
-            debts: JSON.parse(localStorage.getItem('fin_debt_v2') || '[]'),
-            goals: JSON.parse(localStorage.getItem('fin_goals_v2') || '[]'),
-            user: { name: localStorage.getItem('fin_name_v2') || 'คุณ' },
-            currentType: 'expense'
+        transactions: JSON.parse(localStorage.getItem('fin_tx_v2') || '[]'),
+        debts: JSON.parse(localStorage.getItem('fin_debt_v2') || '[]'),
+        goals: JSON.parse(localStorage.getItem('fin_goals_v2') || '[]'),
+        user: { name: localStorage.getItem('fin_name_v2') || 'คุณ' },
+        currentType: 'expense'
         };
 
         const categories = {
@@ -368,21 +368,19 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            for (let i = 0; i < 3; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!response.ok) throw new Error('API Error');
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (error) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error('API Error');
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (error) {
+                console.error(error);
+                return null;
             }
-            return null;
         }
 
         async function analyzeFinances() {
@@ -428,7 +426,7 @@
                 `).join('');
             }
 
-            // เป้าหมาย (Empty State Check)
+            // เป้าหมาย
             const gList = document.getElementById('goals-list');
             gList.innerHTML = state.goals.map((g, i) => `
                 <div class="bg-white p-6 rounded-[2rem] border border-pastel custom-shadow space-y-5 card-hover">
@@ -448,15 +446,15 @@
                     <div class="flex flex-col gap-2 pt-2">
                         <p class="text-lg font-bold text-slate-800">${g.current.toLocaleString()} / <span class="text-slate-200 text-sm">${g.target.toLocaleString()}</span></p>
                         <div class="flex gap-2">
-                             <input type="number" id="goal-save-${i}" placeholder="ยอดออมเพิ่ม" class="w-full p-2 bg-slate-50 border-none rounded-xl text-xs outline-none">
-                             <button onclick="addMoneyToGoal(${i})" class="bg-pastel-primary text-white px-3 rounded-xl hover:bg-opacity-90 transition-all text-xs font-bold">ออม</button>
+                            <input type="number" id="goal-save-${i}" placeholder="ยอดออมเพิ่ม" class="w-full p-2 bg-slate-50 border-none rounded-xl text-xs outline-none">
+                            <button onclick="addMoneyToGoal(${i})" class="bg-pastel-primary text-white px-3 rounded-xl hover:bg-opacity-90 transition-all text-xs font-bold">ออม</button>
                         </div>
                     </div>
                 </div>
             `).join('') || '<div class="text-center w-full col-span-full py-16 bg-white rounded-[2rem] border border-dashed border-slate-200 text-slate-300 italic">ไม่มีเป้าหมายในขณะนี้</div>';
         
 
-            // หนี้สิน (Empty State Check)
+            // หนี้สิน
             const dList = document.getElementById('debt-list');
             dList.innerHTML = state.debts.map((d, i) => `
                 <div class="bg-white p-5 rounded-[2rem] border border-pastel flex items-center justify-between card-hover custom-shadow">
@@ -469,11 +467,11 @@
                     </div>
                     <div class="flex gap-2">
                         ${d.balance > 0 ? `
-                        <input type="number" id="pay-input-${i}" placeholder="ยอดชำระ" class="w-20 p-2 bg-slate-50 border-none rounded-xl text-xs outline-none">
+                        <input type="number" id="pay-debt-${i}" placeholder="ยอดชำระ" class="w-20 p-2 bg-slate-50 border-none rounded-xl text-xs outline-none">
                         <button onclick="payDebt(${i})" class="bg-rose-400 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-lg shadow-rose-100">จ่าย</button>
                         ` : `
                         <button onclick="deleteDebt(${i})" class="bg-slate-200 text-slate-500 px-4 py-2 rounded-xl font-bold text-xs hover:bg-rose-400 hover:text-white transition-all flex items-center gap-1">
-                           <i data-lucide="trash-2" size="14"></i> ลบรายการ
+                        <i data-lucide="trash-2" size="14"></i> ลบรายการ
                         </button>
                         `}
                     </div>
@@ -506,22 +504,6 @@
             btn.disabled = false;
         }
 
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const box = document.getElementById('chat-box');
-            if(!input.value) return;
-            const msg = input.value; input.value = '';
-            box.innerHTML += `<div class="flex justify-end"><div class="bg-pastel-primary text-white p-4 rounded-3xl rounded-tr-none max-w-[80%] shadow-md text-sm">${msg}</div></div>`;
-            box.scrollTop = box.scrollHeight;
-
-            const { inc, exp, debts, balance } = getFinancialContext();
-            const contextPrompt = `สถานะปัจจุบัน: รายรับ ${inc}, รายจ่าย ${exp}, หนี้ ${debts}, เงินเหลือ ${balance}. คำถาม: ${msg}`;
-            const reply = await callGeminiAI(contextPrompt, "You are a helpful financial assistant. Use Markdown for structured responses.");
-            
-            box.innerHTML += `<div class="flex justify-start"><div class="bg-white border border-pastel text-slate-600 p-4 rounded-3xl rounded-tl-none max-w-[80%] shadow-sm text-sm prose-ai">${marked.parse(reply || "วันนี้ AI พักสมองอยู่ครับ")}</div></div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-
         function saveTransaction() {
             const amount = parseFloat(document.getElementById('tx-amount').value);
             const category = document.getElementById('tx-category').value;
@@ -542,11 +524,22 @@
             updateUI();
         }
 
+        // --- แก้ไขฟังก์ชัน payDebt ---
         function payDebt(i) {
-            const amount = parseFloat(document.getElementById(`pay-debt-${i}`).value);
-            if (!amount) return;
+            // ใช้ ID ให้ตรงกับใน updateUI คือ 'pay-debt-${i}'
+            const input = document.getElementById(`pay-debt-${i}`);
+            if(!input || !input.value) return;
+            const amount = parseFloat(input.value);
+            
             state.debts[i].balance = Math.max(0, state.debts[i].balance - amount);
-            state.transactions.push({ type: 'expense', amount, category: 'หนี้สิน', date: 'ชำระหนี้' });
+            
+            state.transactions.push({ 
+                type: 'expense', 
+                amount: amount, 
+                category: 'ชำระหนี้สิน', 
+                date: new Date().toLocaleDateString('th-TH') 
+            });
+            
             localStorage.setItem('fin_debt_v2', JSON.stringify(state.debts));
             localStorage.setItem('fin_tx_v2', JSON.stringify(state.transactions));
             updateUI();
@@ -589,20 +582,15 @@
                 date: new Date().toLocaleDateString('th-TH')
             });
 
-            localStorage.setItem('vabva_goals', JSON.stringify(state.goals));
-            localStorage.setItem('vabva_tx', JSON.stringify(state.transactions));
+            localStorage.setItem('fin_goals_v2', JSON.stringify(state.goals));
+            localStorage.setItem('fin_tx_v2', JSON.stringify(state.transactions));
             updateUI();
-            analyzeDashboard();
         }
-
-        // ฟังก์ชันลบรายการหนี้
         function deleteDebt(i) { 
             state.debts.splice(i, 1); 
-            localStorage.setItem('vabva_debts', JSON.stringify(state.debts)); 
+            localStorage.setItem('fin_debt_v2', JSON.stringify(state.debts)); 
             updateUI(); 
         }
-
-        // ฟังก์ชัน AI วิเคราะห์เป้าหมาย
         async function analyzeGoalsAI() {
             const insightBox = document.getElementById('ai-goal-insight');
             const content = document.getElementById('ai-goal-content');
@@ -613,49 +601,13 @@
             }
 
             insightBox.classList.remove('hidden');
-            const apiKey = ""; // ระบบจะจัดการคีย์ให้อัตโนมัติ
             
-            // เตรียมข้อมูลส่งให้ AI
-            const goalData = state.goals.map(g => `- ${g.name}: เป้าหมาย ${g.target} บาท (ปัจจุบันมี ${g.current} บาท, ขาดอีก ${g.target - g.current})`).join('\n');
+            const goalData = state.goals.map(g => `- ${g.name}: เป้าหมาย ${g.target} บาท (ปัจจุบันมี ${g.current} บาท)`).join('\n');
             const userQuery = `ช่วยวิเคราะห์เป้าหมายทางการเงินต่อไปนี้ในฐานะผู้เชี่ยวชาญ และให้คำแนะนำสั้นๆ 1-2 ประโยคว่าควรปรับแผนอย่างไร:\n${goalData}`;
 
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: "คุณคือ AI ผู้เชี่ยวชาญด้านการเงินของแอป วับวาว ตอบเป็นภาษาไทย ให้คำแนะนำที่สร้างกำลังใจและเป็นรูปธรรม สั้นและกระชับที่สุด" }] }
-                    })
-                });
-
-                const result = await response.json();
-                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || "พยายามออมอย่างต่อเนื่องเพื่อเป้าหมายที่ตั้งไว้นะครับ!";
-                content.innerText = aiText;
-                lucide.createIcons(); // รีโหลดไอคอน
-            } catch (error) {
-                content.innerText = "แนะนำให้คุณลองคำนวณสัดส่วนการออมเพิ่มอีกนิด เพื่อให้ถึงเป้าหมายเร็วขึ้นครับ";
-            }
-        }
-        function addGoal() {
-            const name = document.getElementById('goal-name').value;
-            const target = parseFloat(document.getElementById('goal-target').value);
-            if(!name || !target) return;
-            state.goals.push({ name, target, current: 0 });
-            saveState();
-            closeModal('modal-goal');
-            
-            // --- เพิ่มบรรทัดนี้ ---
-            analyzeGoalsAI(); 
-            // ------------------
-        }
-        function deleteGoal(idx) {
-            state.goals.splice(idx, 1);
-            saveState();
-            
-            // --- เพิ่มบรรทัดนี้ ---
-            analyzeGoalsAI();
-            // ------------------
+            const aiText = await callGeminiAI(userQuery, "คุณคือ AI ผู้เชี่ยวชาญด้านการเงินของแอป วับวาว ตอบเป็นภาษาไทย ให้คำแนะนำที่สร้างกำลังใจและเป็นรูปธรรม สั้นและกระชับที่สุด");
+            content.innerText = aiText || "พยายามออมอย่างต่อเนื่องเพื่อเป้าหมายที่ตั้งไว้นะครับ!";
+            lucide.createIcons();
         }
 
     </script>
